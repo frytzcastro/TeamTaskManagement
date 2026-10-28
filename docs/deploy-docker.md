@@ -95,11 +95,15 @@ Set `RUN_MIGRATIONS=true` in the host `.env` for deploys that should migrate (de
 
 ## CI/CD flow
 
-Push to `main` (or `workflow_dispatch`) runs [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml):
+[`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml):
 
-1. Build multi-stage Docker image  
-2. Push tags: git SHA + `latest`  
-3. SSH to EC2 → ECR login → compose pull/up → health check `/up`
+1. **Test** (every push / PR / manual run): PHPUnit via sqlite in-memory — no AWS secrets required  
+2. **Deploy** (only after tests pass, on `main` or `workflow_dispatch`):
+   - Build multi-stage Docker image  
+   - Push tags: git SHA + `latest`  
+   - SSH to EC2 → ECR login → compose pull/up → health check `/up`
+
+PRs run **Test** only. Failed tests block deploy on `main`.
 
 ## Rollback
 

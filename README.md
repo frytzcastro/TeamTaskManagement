@@ -78,15 +78,22 @@ docker compose down
 
 ## Production deploy
 
-GitHub Actions → Amazon ECR → EC2, with EFS-backed `storage/`. See [docs/deploy-docker.md](docs/deploy-docker.md).
+GitHub Actions (`.github/workflows/ci-cd.yml`): **test → deploy**.
 
-Required GitHub secrets (do **not** commit these): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `ECR_REPOSITORY`, `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, optional `EC2_APP_DIR`.
+1. Every push/PR: `php artisan test` (sqlite in-memory)
+2. `main` (or manual run), only if tests pass: ECR → EC2
+
+EFS-backed `storage/` details: [docs/deploy-docker.md](docs/deploy-docker.md).
+
+Required GitHub secrets for **deploy** only (do **not** commit these): `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `ECR_REPOSITORY`, `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, optional `EC2_APP_DIR`.
 
 ## Tests
 
 ```bash
 composer test
 ```
+
+CI runs the same suite automatically; deploy will not run if tests fail.
 
 ## Security
 
