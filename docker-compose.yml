@@ -1,0 +1,37 @@
+# Local / development: build the app image locally.
+# MySQL stays external — set DB_* in .env (use host.docker.internal on Mac/Windows
+# to reach MySQL on the host machine).
+#
+# Storage: bind-mounts ./storage so files persist on your laptop.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mytask:local
+    ports:
+      - "${APP_PORT:-8080}:80"
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      # Must match the URL in the browser (host publish port). Do not reuse
+      # APP_URL from .env — that is often :8000 for php artisan serve, and
+      # Laravel would emit asset links on the wrong host/port (blank Inertia page).
+      APP_URL: http://localhost:${APP_PORT:-8080}
+      ASSET_URL: http://localhost:${APP_PORT:-8080}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-false}
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
+      # Always reach MySQL on the host — 127.0.0.1 inside the container is wrong.
+      DB_HOST: host.docker.internal
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:-mytask}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+    volumes:
+      - ./storage:/var/www/html/storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

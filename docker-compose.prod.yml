@@ -1,0 +1,23 @@
+# Production overrides: pull from ECR and mount EFS-backed storage.
+# Usage on EC2:
+#   export ECR_REGISTRY=123456789012.dkr.ecr.ap-southeast-1.amazonaws.com
+#   export IMAGE_TAG=latest
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Prerequisites: EFS mounted at /mnt/efs/mytask (see docs/deploy-docker.md).
+
+services:
+  app:
+    image: ${ECR_REGISTRY:?ECR_REGISTRY is required}/mytask:${IMAGE_TAG:-latest}
+    pull_policy: always
+    ports: !override
+      - "${APP_PORT:-80}:80"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+    volumes: !override
+      # Replaces ./storage from docker-compose.yml (Compose 2.24+)
+      - /mnt/efs/mytask/storage:/var/www/html/storage
+    restart: unless-stopped

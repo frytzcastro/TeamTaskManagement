@@ -1,0 +1,271 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Logo-driven palette + layered neutrals for composition */
+    --color-app: 244 246 249;
+    --color-sidebar: 249 250 251;
+    --color-surface: 255 255 255;
+    --color-brand: 24 64 192;
+    --color-brand-hover: 16 48 160;
+    --color-brand-soft: 232 238 252;
+    --color-border: 229 231 235;
+    --color-ink: 17 24 39;
+    --color-ink-muted: 107 114 128;
+    --color-success: 16 148 104;
+    --color-success-soft: 232 250 242;
+    --color-warning: 180 130 16;
+    --color-warning-soft: 255 248 230;
+    --color-danger: 220 38 38;
+    --color-danger-soft: 254 242 242;
+    --color-info: 56 120 240;
+    --color-info-soft: 235 242 255;
+
+    --radius-card: 0.75rem;
+    --radius-control: 0.5rem;
+    --shadow-soft: 0 1px 2px rgb(17 24 39 / 0.03), 0 2px 8px rgb(17 24 39 / 0.03);
+    --shadow-lift: 0 4px 6px rgb(17 24 39 / 0.04), 0 16px 32px rgb(17 24 39 / 0.08);
+    --shadow-bar: 0 1px 0 rgb(17 24 39 / 0.04), 0 4px 12px rgb(17 24 39 / 0.03);
+
+    --motion-fast: 150ms;
+    --motion-surface: 200ms;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --chart-brand: #1840c0;
+    --chart-success: #38c890;
+    --chart-warning: #f8c830;
+    --chart-danger: #dc2626;
+    --chart-info: #3878f0;
+    --chart-muted: #6b7280;
+    --chart-overlap: #3878f0;
+}
+
+@layer base {
+    body {
+        @apply bg-app text-ink antialiased;
+        letter-spacing: -0.011em;
+    }
+}
+
+@layer utilities {
+    .app-motion-fast {
+        transition-duration: var(--motion-fast);
+        transition-timing-function: var(--ease-out);
+    }
+
+    .app-motion-surface {
+        transition-duration: var(--motion-surface);
+        transition-timing-function: var(--ease-out);
+    }
+
+    .app-interactive {
+        @apply transition;
+        transition-duration: var(--motion-surface);
+        transition-timing-function: var(--ease-out);
+        transition-property: background-color, color, border-color, box-shadow, transform, opacity;
+    }
+
+    .app-interactive:hover {
+        box-shadow: var(--shadow-soft);
+    }
+
+    .app-interactive:active {
+        transform: translateY(1px);
+    }
+
+    @keyframes app-badge-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.12); }
+    }
+
+    .app-badge-pulse {
+        animation: app-badge-pulse 1.2s var(--ease-out) 1;
+    }
+}
+
+@layer components {
+    .app-link {
+        @apply text-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1;
+        transition: color var(--motion-fast) var(--ease-out);
+    }
+
+    .app-th {
+        @apply px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted;
+    }
+
+    .app-td {
+        @apply px-4 py-3 text-sm text-ink;
+    }
+
+    /* Default surface: quiet — border only; soft variant for selective depth */
+    .app-card {
+        @apply border border-border/80 bg-surface;
+        border-radius: var(--radius-card);
+    }
+
+    .app-card-soft {
+        @apply bg-surface;
+        border-radius: var(--radius-card);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .app-panel {
+        @apply bg-app/60;
+        border-radius: var(--radius-card);
+    }
+
+    .app-toolbar {
+        @apply flex flex-wrap items-center justify-between gap-3;
+    }
+
+    .app-topbar {
+        box-shadow: var(--shadow-bar);
+    }
+
+    .app-segment {
+        @apply inline-flex rounded-control border border-border bg-app p-0.5 text-sm;
+    }
+
+    .app-segment-btn {
+        @apply rounded-[0.35rem] px-3 py-1.5 font-medium;
+        transition: background-color var(--motion-fast) var(--ease-out),
+            color var(--motion-fast) var(--ease-out),
+            box-shadow var(--motion-fast) var(--ease-out);
+    }
+
+    .app-segment-btn-active {
+        @apply bg-surface text-ink shadow-sm;
+    }
+
+    .app-segment-btn-idle {
+        @apply text-ink-muted hover:bg-surface/70 hover:text-ink;
+    }
+
+    .app-list-row {
+        @apply grid gap-2 px-4 py-2.5 sm:items-center sm:gap-3 sm:px-5;
+        transition: background-color var(--motion-surface) var(--ease-out),
+            box-shadow var(--motion-surface) var(--ease-out),
+            transform var(--motion-fast) var(--ease-out);
+    }
+
+    .app-list-row:hover {
+        @apply bg-app/80;
+        box-shadow: inset 3px 0 0 0 rgb(var(--color-brand) / 0.35);
+    }
+
+    .app-input {
+        @apply block w-full min-h-10 rounded-control border-border bg-surface text-sm text-ink focus:border-brand focus:ring-brand sm:min-h-0;
+    }
+
+    /* Open section (not a card) */
+    .app-section {
+        @apply space-y-3;
+    }
+
+    .app-section-title {
+        @apply text-[13px] font-semibold tracking-tight text-ink;
+    }
+
+    .app-section-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted;
+    }
+
+    /* Group header band (list/table groups) */
+    .app-group-header {
+        @apply flex items-center gap-2 px-4 py-2 text-sm font-semibold text-ink sm:px-5;
+    }
+
+    .app-meta {
+        @apply text-xs text-ink-muted;
+    }
+
+    .app-page {
+        @apply mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8;
+    }
+
+    .app-page-stack {
+        @apply space-y-8;
+    }
+
+    .app-page-stack-tight {
+        @apply space-y-5;
+    }
+
+    /* Delivery project hub stage panels */
+    .hub-stage {
+        @apply space-y-6;
+    }
+
+    .hub-stage-header {
+        @apply flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-end sm:justify-between;
+    }
+
+    .hub-stage-title {
+        @apply text-lg font-semibold tracking-tight text-ink;
+    }
+
+    .hub-stage-desc {
+        @apply mt-1 max-w-2xl text-sm leading-relaxed text-ink-muted;
+    }
+
+    .hub-stage-actions {
+        @apply flex flex-shrink-0 flex-wrap items-center gap-2;
+    }
+
+    .hub-step {
+        @apply relative rounded-card border border-border/70 bg-surface;
+    }
+
+    .hub-step-label {
+        @apply inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-brand;
+    }
+
+    .hub-item-list {
+        @apply overflow-hidden rounded-card border border-border/70;
+    }
+
+    .hub-item-cols {
+        @apply hidden gap-3 border-b border-border/60 bg-app/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted sm:grid sm:px-5;
+    }
+
+    .hub-item-row {
+        @apply grid gap-1.5 px-4 py-3 transition duration-surface ease-out hover:bg-app/70 sm:items-center sm:gap-3 sm:px-5;
+    }
+
+    .hub-dod {
+        @apply h-1.5 w-20 overflow-hidden rounded-full bg-slate-200;
+    }
+
+    .hub-dod-fill {
+        @apply h-full rounded-full bg-brand transition-all duration-surface ease-out;
+    }
+
+    .hub-type-chip {
+        @apply inline-flex items-center rounded-control bg-app px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted;
+    }
+
+    .hub-zone {
+        @apply space-y-3;
+    }
+
+    .hub-zone-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted;
+    }
+
+    .hub-glance {
+        @apply grid gap-px overflow-hidden rounded-card border border-border/70 bg-border/70 sm:grid-cols-2 lg:grid-cols-5;
+    }
+
+    .hub-glance-cell {
+        @apply flex flex-col gap-1.5 bg-surface px-4 py-3.5;
+    }
+
+    .hub-glance-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-muted;
+    }
+
+    .hub-glance-value {
+        @apply text-sm font-semibold text-ink;
+    }
+}

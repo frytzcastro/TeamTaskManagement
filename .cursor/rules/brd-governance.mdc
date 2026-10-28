@@ -1,0 +1,22 @@
+---
+description: Follow the product BRD; update docs/BRD.md before any out-of-scope change
+alwaysApply: true
+---
+
+# BRD Governance
+
+Source of truth: [docs/BRD.md](docs/BRD.md). Read it before product/architecture decisions. Align all feature work to it.
+
+## Update-first gate
+
+Before implementing anything outside BRD scope — new modules, phase jumps (P1/P2 without ask), hierarchy changes, role/permission model changes, success-measurement changes, or previously out-of-scope items — **update `docs/BRD.md` first**, then implement. If a request conflicts with the BRD, stop, propose the BRD edit, and proceed only after the document reflects the new scope.
+
+## Non-negotiables
+
+- **North Star:** right work, on time, acceptable quality, expected business result
+- **Hierarchy:** Strategic Pillar → Strategic Initiative (↔ Systems touched) → (Business Problem) → Delivery Project (`standard`|`dmaic`); **System** owns Epic → Feature backlog; Project **assigns** Features into delivery → Task/Subtask → Bug/Support → Release; **KPI** layers business|process|six_sigma linked to initiative/delivery project; DMAIC profile on `dmaic` projects
+- **Stack:** Laravel + Vue/Vite + MySQL + REST; API-first
+- **Phase:** build agreed increments; Support, Releases/Deployments, Sprints, Feature DoD, notification inbox, and Team charts are in the current ops pass when asked; do not pull AI or full test-case suites unless asked
+- **Out of scope (current deferrals):** HR/payroll/attendance, full CRM/accounting, source-code hosting, AI coding/codegen, attachments/KB articles, full QA test_cases/test_runs, time tracking
+- **Delivery ≠ business success:** always report both delivery status and KPI outcome
+- **Traceability:** preserve KPI → initiative → delivery project → (DMAIC root cause → improvement →) task drill-down (include system where applicable)
