@@ -1,6 +1,6 @@
 <script setup>
 import { CHART_COLORS } from '@/Lib/statusColors.js';
-import EmptyState from '@/Components/EmptyState.vue';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Gantt from 'frappe-gantt';
 import 'frappe-gantt/dist/frappe-gantt.css';
@@ -119,14 +119,16 @@ onBeforeUnmount(() => {
 
 <template>
     <div>
-        <div v-if="error" class="rounded-lg bg-danger-soft p-4 text-sm text-danger">
-            {{ error }}
-        </div>
-        <EmptyState
-            v-else-if="!ganttTasks.length"
-            title="No dated schedule bars"
-            description="Set task start/due dates or expand a project with dated work."
-        />
+        <Alert v-if="error" variant="destructive" class="m-4">
+            <AlertTitle>Chart error</AlertTitle>
+            <AlertDescription>{{ error }}</AlertDescription>
+        </Alert>
+        <Alert v-else-if="!ganttTasks.length" class="m-4 border-dashed">
+            <AlertTitle>No dated schedule bars</AlertTitle>
+            <AlertDescription>
+                Set task start/due dates or expand a project with dated work.
+            </AlertDescription>
+        </Alert>
         <div v-else class="overflow-x-auto overscroll-x-contain p-3 touch-pan-x schedule-gantt-wrap">
             <div ref="host" class="gantt-target min-w-[40rem]" />
         </div>
