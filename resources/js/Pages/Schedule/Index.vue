@@ -1,18 +1,41 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ScheduleGantt from '@/Components/ScheduleGantt.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import SelectInput from '@/Components/SelectInput.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import PageHeader from '@/Components/PageHeader.vue';
-import FilterBar from '@/Components/FilterBar.vue';
-import StatCard from '@/Components/StatCard.vue';
-import SectionCard from '@/Components/SectionCard.vue';
-import EmptyState from '@/Components/EmptyState.vue';
+import { Button } from '@/Components/ui/button';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/Components/ui/card';
+import { Badge } from '@/Components/ui/badge';
+import { Alert, AlertDescription } from '@/Components/ui/alert';
+import { Separator } from '@/Components/ui/separator';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableEmpty,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/Components/ui/table';
 import { CHART_COLORS } from '@/Lib/statusColors.js';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
+
+const ALL = '__all__';
 
 const props = defineProps({
     schedule: Object,
@@ -24,17 +47,45 @@ const props = defineProps({
 const filters = reactive({
     from: props.schedule?.filters?.from || props.schedule?.window?.from || '',
     to: props.schedule?.filters?.to || props.schedule?.window?.to || '',
-    project_id: props.schedule?.filters?.project_id || '',
-    assignee_id: props.schedule?.filters?.assignee_id || '',
+    project_id: props.schedule?.filters?.project_id
+        ? String(props.schedule.filters.project_id)
+        : ALL,
+    assignee_id: props.schedule?.filters?.assignee_id
+        ? String(props.schedule.filters.assignee_id)
+        : ALL,
     view: props.viewMode || 'Month',
 });
+
+const showingProjectSummary = computed(() => filters.project_id === ALL);
+
+const metrics = computed(() => [
+    { label: 'Bars', value: props.schedule?.bars?.length || 0 },
+    { label: 'Schedule slip signals', value: props.schedule?.conflicts?.slip_count || 0 },
+    { label: 'Overlap pairs (approx.)', value: props.schedule?.conflicts?.overlap_count || 0 },
+]);
+
+const legend = [
+    { label: 'Project', color: CHART_COLORS.brand },
+    { label: 'Epic', color: CHART_COLORS.info },
+    { label: 'Feature', color: CHART_COLORS.success },
+    { label: 'Task', color: CHART_COLORS.muted },
+    { label: 'Slip / overdue', color: CHART_COLORS.warning },
+    { label: 'Overlap', color: CHART_COLORS.overlap, outline: true },
+];
+
+const tips = [
+    'Bars use rolled envelope when present, otherwise planned/commitment dates.',
+    'Amber = slip (rolled past planned, or overdue / late complete).',
+    'Violet stroke = same assignee with overlapping open tasks.',
+    'Click a bar to open that record.',
+];
 
 const apply = () => {
     router.get(route('schedule.index'), {
         from: filters.from || undefined,
         to: filters.to || undefined,
-        project_id: filters.project_id || undefined,
-        assignee_id: filters.assignee_id || undefined,
+        project_id: filters.project_id === ALL ? undefined : filters.project_id,
+        assignee_id: filters.assignee_id === ALL ? undefined : filters.assignee_id,
         view: filters.view || 'Month',
     }, { preserveState: true });
 };
@@ -51,90 +102,209 @@ const apply = () => {
         </template>
         <div class="py-6 sm:py-8">
             <div class="app-page space-y-6">
-                <SectionCard>
-                    <form @submit.prevent="apply">
-                        <FilterBar class="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-6">
-                            <div>
-                                <InputLabel value="From" />
-                                <TextInput v-model="filters.from" type="date" class="mt-1 block w-full" />
+                <Card>
+                    <CardHeader class="pb-3">
+                        <CardTitle class="text-base">Filters</CardTitle>
+                        <CardDescription>
+                            Narrow the portfolio window, project, assignee, and Gantt zoom.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form @submit.prevent="apply">
+                            <div class="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-6">
+                                <div class="space-y-1.5">
+                                    <Label for="schedule-from">From</Label>
+                                    <Input
+                                        id="schedule-from"
+                                        v-model="filters.from"
+                                        type="date"
+                                    />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <Label for="schedule-to">To</Label>
+                                    <Input
+                                        id="schedule-to"
+                                        v-model="filters.to"
+                                        type="date"
+                                    />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <Label>Project</Label>
+                                    <Select v-model="filters.project_id">
+                                        <SelectTrigger aria-label="Project">
+                                            <SelectValue placeholder="All (summary)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem :value="ALL">All (summary)</SelectItem>
+                                            <SelectItem
+                                                v-for="p in deliveryProjects"
+                                                :key="p.id"
+                                                :value="String(p.id)"
+                                            >
+                                                {{ p.name }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <Label>Assignee</Label>
+                                    <Select v-model="filters.assignee_id">
+                                        <SelectTrigger aria-label="Assignee">
+                                            <SelectValue placeholder="All" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem :value="ALL">All</SelectItem>
+                                            <SelectItem
+                                                v-for="u in users"
+                                                :key="u.id"
+                                                :value="String(u.id)"
+                                            >
+                                                {{ u.name }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <Label>Zoom</Label>
+                                    <Select v-model="filters.view">
+                                        <SelectTrigger aria-label="Zoom">
+                                            <SelectValue placeholder="Month" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Week">Week</SelectItem>
+                                            <SelectItem value="Month">Month</SelectItem>
+                                            <SelectItem value="Year">Year</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div class="flex items-end">
+                                    <Button type="submit" class="w-full">Apply</Button>
+                                </div>
                             </div>
-                            <div>
-                                <InputLabel value="To" />
-                                <TextInput v-model="filters.to" type="date" class="mt-1 block w-full" />
-                            </div>
-                            <div>
-                                <InputLabel value="Project" />
-                                <SelectInput v-model="filters.project_id" class="mt-1">
-                                    <option value="">All (summary)</option>
-                                    <option v-for="p in deliveryProjects" :key="p.id" :value="p.id">{{ p.name }}</option>
-                                </SelectInput>
-                            </div>
-                            <div>
-                                <InputLabel value="Assignee" />
-                                <SelectInput v-model="filters.assignee_id" class="mt-1">
-                                    <option value="">All</option>
-                                    <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                                </SelectInput>
-                            </div>
-                            <div>
-                                <InputLabel value="Zoom" />
-                                <SelectInput v-model="filters.view" class="mt-1">
-                                    <option value="Week">Week</option>
-                                    <option value="Month">Month</option>
-                                    <option value="Year">Year</option>
-                                </SelectInput>
-                            </div>
-                            <div class="flex items-end">
-                                <PrimaryButton type="submit" class="w-full justify-center">Apply</PrimaryButton>
-                            </div>
-                        </FilterBar>
-                    </form>
-                </SectionCard>
+                        </form>
+                    </CardContent>
+                </Card>
 
                 <div class="grid gap-4 sm:grid-cols-3">
-                    <StatCard label="Bars" :value="schedule.bars?.length || 0" />
-                    <StatCard label="Schedule slip signals" :value="schedule.conflicts?.slip_count || 0" />
-                    <StatCard label="Overlap pairs (approx.)" :value="schedule.conflicts?.overlap_count || 0" />
+                    <Card v-for="metric in metrics" :key="metric.label">
+                        <CardHeader class="p-4 pb-2">
+                            <CardDescription class="text-[11px] font-semibold uppercase tracking-[0.08em]">
+                                {{ metric.label }}
+                            </CardDescription>
+                            <CardTitle class="text-2xl tabular-nums">
+                                {{ metric.value }}
+                            </CardTitle>
+                        </CardHeader>
+                    </Card>
                 </div>
 
-                <div class="flex flex-wrap gap-4 text-xs text-ink-muted">
-                    <span class="inline-flex items-center gap-1"><span class="inline-block h-3 w-3 rounded" :style="{ backgroundColor: CHART_COLORS.brand }" /> Project</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block h-3 w-3 rounded" :style="{ backgroundColor: CHART_COLORS.info }" /> Epic</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block h-3 w-3 rounded" :style="{ backgroundColor: CHART_COLORS.success }" /> Feature</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block h-3 w-3 rounded" :style="{ backgroundColor: CHART_COLORS.muted }" /> Task</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block h-3 w-3 rounded" :style="{ backgroundColor: CHART_COLORS.warning }" /> Slip / overdue</span>
-                    <span class="inline-flex items-center gap-1"><span class="inline-block h-3 w-3 rounded border-2" :style="{ borderColor: CHART_COLORS.overlap }" /> Overlap</span>
+                <div class="flex flex-wrap gap-2">
+                    <Badge
+                        v-for="item in legend"
+                        :key="item.label"
+                        variant="outline"
+                        class="gap-1.5 font-normal text-muted-foreground"
+                    >
+                        <span
+                            class="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+                            :class="item.outline ? 'border-2 bg-transparent' : ''"
+                            :style="item.outline
+                                ? { borderColor: item.color }
+                                : { backgroundColor: item.color }"
+                        />
+                        {{ item.label }}
+                    </Badge>
                 </div>
 
-                <p v-if="!filters.project_id" class="text-sm text-ink-muted">
-                    Showing project summaries. Choose a project to expand Epic → Feature → Task, or open a project hub Schedule tab.
-                </p>
+                <Alert v-if="showingProjectSummary">
+                    <AlertDescription>
+                        Showing project summaries. Choose a project to expand Epic → Feature → Task, or open a project hub Schedule tab.
+                    </AlertDescription>
+                </Alert>
 
-                <SectionCard title="Timeline" flush :padding="false">
-                    <ScheduleGantt :bars="schedule.bars" :view-mode="filters.view" />
-                </SectionCard>
+                <Card>
+                    <CardHeader class="border-b border-border/70 px-4 py-3 sm:px-5">
+                        <CardTitle class="text-base">Timeline</CardTitle>
+                        <CardDescription>
+                            Click a bar to open that record.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent class="p-0">
+                        <ScheduleGantt :bars="schedule.bars" :view-mode="filters.view" />
+                    </CardContent>
+                </Card>
 
                 <div class="grid gap-6 lg:grid-cols-2">
-                    <SectionCard title="Undated work">
-                        <ul v-if="schedule.undated?.length" class="divide-y divide-border">
-                            <li v-for="item in schedule.undated" :key="item.id" class="flex justify-between gap-2 py-3 text-sm first:pt-0 last:pb-0">
-                                <div>
-                                    <span class="text-xs uppercase text-ink-muted">{{ item.type }}</span>
-                                    <Link :href="item.href" class="app-link ml-2 font-medium">{{ item.title }}</Link>
-                                </div>
-                                <span class="text-ink-muted">{{ item.assignee_name || item.status || '—' }}</span>
-                            </li>
-                        </ul>
-                        <EmptyState v-else title="No undated items" description="No undated items in this view." />
-                    </SectionCard>
-                    <SectionCard title="Tips">
-                        <ul class="space-y-2 text-sm text-ink-muted">
-                            <li>Bars use rolled envelope when present, otherwise planned/commitment dates.</li>
-                            <li>Amber = slip (rolled past planned, or overdue / late complete).</li>
-                            <li>Violet stroke = same assignee with overlapping open tasks.</li>
-                            <li>Click a bar to open that record.</li>
-                        </ul>
-                    </SectionCard>
+                    <Card>
+                        <CardHeader class="border-b border-border/70 px-4 py-3 sm:px-5">
+                            <CardTitle class="text-base">Undated work</CardTitle>
+                            <CardDescription>
+                                Items in this view without display dates.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent class="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead class="text-right">Assignee / status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <template v-if="schedule.undated?.length">
+                                        <TableRow v-for="item in schedule.undated" :key="item.id">
+                                            <TableCell>
+                                                <Badge variant="secondary" class="font-normal uppercase">
+                                                    {{ item.type }}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="link"
+                                                    class="h-auto p-0 font-medium"
+                                                    as-child
+                                                >
+                                                    <Link :href="item.href">{{ item.title }}</Link>
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell class="text-right text-muted-foreground">
+                                                {{ item.assignee_name || item.status || '—' }}
+                                            </TableCell>
+                                        </TableRow>
+                                    </template>
+                                    <TableEmpty v-else :colspan="3">
+                                        <div class="space-y-1 text-center">
+                                            <p class="font-medium text-foreground">No undated items</p>
+                                            <p class="text-muted-foreground">No undated items in this view.</p>
+                                        </div>
+                                    </TableEmpty>
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader class="border-b border-border/70 px-4 py-3 sm:px-5">
+                            <CardTitle class="text-base">Tips</CardTitle>
+                            <CardDescription>
+                                How to read slip, overlap, and bar dates.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent class="p-4 sm:p-5">
+                            <ul class="space-y-0">
+                                <li
+                                    v-for="(tip, index) in tips"
+                                    :key="tip"
+                                >
+                                    <p class="py-2.5 text-sm text-muted-foreground">
+                                        {{ tip }}
+                                    </p>
+                                    <Separator v-if="index < tips.length - 1" />
+                                </li>
+                            </ul>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>

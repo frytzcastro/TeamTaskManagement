@@ -1,0 +1,17 @@
+<script setup>
+import { cn } from '@/Lib/utils';
+
+const props = defineProps({
+  class: {
+    type: [Boolean, null, String, Object, Array],
+    required: false,
+    skipCheck: true,
+  },
+});
+</script>
+
+<template>
+  <h3 :class="cn('font-semibold leading-none tracking-tight', props.class)">
+    <slot />
+  </h3>
+</template>

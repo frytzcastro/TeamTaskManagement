@@ -1,0 +1,22 @@
+---
+description: Enforce shadcn-vue + Tailwind design system for all frontend work
+alwaysApply: true
+---
+
+# Frontend Design System
+
+Source of truth: [AGENTS.md](AGENTS.md). Read it before UI work.
+
+## Non-negotiables
+
+- **Primary kit:** shadcn-vue under `resources/js/Components/ui/*` + Tailwind utilities
+- **CLI:** `shadcn-vue@0.11.4` / radix (Tailwind v3) only — e.g. `./node_modules/.bin/shadcn-vue add <name> -y`. Do not use `@latest` or upgrade to Tailwind 4 unless asked
+- **Tokens:** use semantic theme colors from `resources/css/app.css` / `tailwind.config.js`; no arbitrary hex sprawl
+- **Reuse order:** existing `ui/` → existing app components (`PageHeader`, `DataTable`, …) → compose with Tailwind → extract shared → custom CSS last
+- **Preserve:** Inertia behavior, props/events, permissions, API contracts, `AuthenticatedLayout` / `GuestLayout` unless asked to redesign
+- **No mass page refactors** to shadcn unless explicitly requested; new/changed UI uses `ui/` first
+- **Do not** invent parallel button/input/dialog styles or duplicate components
+
+## App composition (keep)
+
+`PageHeader`, `SectionCard`, `DataTable`, `FilterBar`, `EmptyState`, `StatusBadge`, `FlashAlerts`, `Breadcrumbs`, `Pagination`, `AppSidebar`, domain widgets (`TaskKanban`, `ScheduleGantt`, `ImprovementWorkspace`).
